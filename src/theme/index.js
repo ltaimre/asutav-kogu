@@ -1,18 +1,19 @@
-import { extendTheme } from '@chakra-ui/react'
+// src/theme/index.js
+import { extendTheme } from "@chakra-ui/react";
+
+const config = {
+  initialColorMode: "light",
+  useSystemColorMode: false,
+};
+
+const fonts = {
+  heading: `'Open Sans', sans-serif`,
+  body: `'Open Sans', sans-serif`,
+};
 
 const theme = extendTheme({
-  fonts: {
-    heading: `'Open Sans', sans-serif`,
-    body: `'Open Sans', sans-serif`,
-  },
-  styles: {
-    global: {
-      body: {
-        bg: 'gray.50',
-        color: 'gray.800',
-      },
-    },
-  },
-})
+  config,
+  fonts,
+});
 
-export default theme
+export default theme;

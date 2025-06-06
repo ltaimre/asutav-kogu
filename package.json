@@ -9,10 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@chakra-ui/react": "^3.20.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "framer-motion": "^12.16.0",
+    "@mantine/core": "^8.0.2",
+    "@mantine/hooks": "^8.0.2",
+    "@mantine/modals": "^8.0.2",
+    "@mantine/notifications": "^8.0.2",
+    "@tabler/icons-react": "^3.34.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

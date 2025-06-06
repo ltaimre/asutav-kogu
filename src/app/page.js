@@ -1,15 +1,7 @@
-'use client'
+"use client";
 
-import Header from '../components/Header'
-import { Box, Text } from '@chakra-ui/react'
+import GoogleSheetTable from "../components/GoogleSheetTable";
 
-export default function HomePage() {
-  return (
-    <>
-      <Header />
-      <Box p={8}>
-        <Text>Tere tulemast!</Text>
-      </Box>
-    </>
-  )
+export default function Page() {
+  return <GoogleSheetTable />;
 }
