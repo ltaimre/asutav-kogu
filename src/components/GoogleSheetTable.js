@@ -9,6 +9,10 @@ import {
   MultiSelect,
   Group,
   Button,
+  Paper,
+  ScrollArea,
+  Center,
+  Text,
 } from "@mantine/core";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { fetchGoogleSheetCsv } from "../lib/fetchGoogleSheet";
@@ -59,48 +63,70 @@ export default function GoogleSheetTable() {
 
   return (
     <Container mt="xl">
-      <Title order={2} mb="md">
+      <Title order={2} mb="md" ta="center">
         {TABLE_TITLE}
       </Title>
 
-      <Group mb="md">
-        <MultiSelect
-          data={options}
-          label="Filtreeri poliitilise rühma järgi"
-          placeholder="Vali üks või mitu"
-          value={polFilter}
-          onChange={setPolFilter}
-          clearable
-        />
-        <Button
-          onClick={() => setSortAsc((prev) => !prev)}
-          variant="light"
-          leftSection={
-            sortAsc ? <IconArrowDown size={16} /> : <IconArrowUp size={16} />
-          }
-        >
-          Sorteeri päevade arvu järgi
-        </Button>
-      </Group>
+      <Paper shadow="md" radius="md" p="md" withBorder>
+        <Group mb="md" justify="space-between" align="end">
+          <MultiSelect
+            data={options}
+            label="Filtreeri poliitilise rühma järgi"
+            placeholder="Vali üks või mitu"
+            value={polFilter}
+            onChange={setPolFilter}
+            clearable
+          />
+          <Button
+            onClick={() => setSortAsc((prev) => !prev)}
+            variant="default"
+            leftSection={
+              sortAsc ? <IconArrowDown size={16} /> : <IconArrowUp size={16} />
+            }
+          >
+            Sorteeri päevade arvu järgi
+          </Button>
+        </Group>
 
-      <Table striped highlightOnHover>
-        <thead>
-          <tr>
-            {DISPLAY_COLUMNS.map((col) => (
-              <th key={col}>{col}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.map((row, i) => (
-            <tr key={i}>
-              {DISPLAY_COLUMNS.map((col) => (
-                <td key={col}>{row[col]}</td>
+        <ScrollArea>
+          <Table
+            striped
+            highlightOnHover
+            withTableBorder
+            withColumnBorders
+            verticalSpacing="sm"
+          >
+            <Table.Thead>
+              <Table.Tr>
+                {DISPLAY_COLUMNS.map((col) => (
+                  <Table.Th key={col}>
+                    <Text size="sm" fw={500} c="dimmed" tt="uppercase">
+                      {col.replace("_", " ")}
+                    </Text>
+                  </Table.Th>
+                ))}
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {filtered.map((row, i) => (
+                <Table.Tr key={i}>
+                  {DISPLAY_COLUMNS.map((col) => (
+                    <Table.Td key={col}>
+                      {["AKL_algus", "AKL_lõpp", "päevi_ametis"].includes(
+                        col
+                      ) ? (
+                        <Center>{row[col]}</Center>
+                      ) : (
+                        row[col]
+                      )}
+                    </Table.Td>
+                  ))}
+                </Table.Tr>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+            </Table.Tbody>
+          </Table>
+        </ScrollArea>
+      </Paper>
     </Container>
   );
 }

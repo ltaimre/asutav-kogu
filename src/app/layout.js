@@ -4,7 +4,7 @@ import { MantineProvider } from "@mantine/core";
 import "./globals.css";
 
 export const metadata = {
-  title: "Minu App",
+  title: "Asutav kogu",
   description: "Next.js + Mantine",
 };
 
