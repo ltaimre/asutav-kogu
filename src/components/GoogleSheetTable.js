@@ -12,7 +12,9 @@ import {
   ScrollArea,
   Center,
   Text,
+  Button,
 } from "@mantine/core";
+import { useRouter } from "next/navigation";
 import { DatePickerInput } from "@mantine/dates";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
@@ -25,6 +27,7 @@ import {
 } from "../constants";
 
 export default function GoogleSheetTable() {
+  const router = useRouter();
   const [data, setData] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [polFilter, setPolFilter] = useState([]);
@@ -145,6 +148,13 @@ export default function GoogleSheetTable() {
       <Title order={2} mb="md" ta="center">
         {TABLE_TITLE}
       </Title>
+      <Button
+        onClick={() => router.push("/timeline")}
+        variant="outline"
+        mb="md"
+      >
+        Vaata visualiseeringut
+      </Button>
 
       <Paper shadow="md" radius="md" p="md" withBorder>
         <Group mb="md" justify="space-between" align="end">
