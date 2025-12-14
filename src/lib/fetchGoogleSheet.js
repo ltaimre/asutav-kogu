@@ -61,3 +61,38 @@ export async function fetchGoogleSheetCsv(csvUrl) {
 
   return { headers, rows };
 }
+
+/**
+ * Laeb komisjoni kuulumise andmed CSV-st
+ * @param {string} csvUrl - Komisjoni kuulumise CSV URL
+ * @returns {Promise<Map<string, string[]>>} - Map kus võti on liikme ID ja väärtus on komisjonide nimekiri
+ */
+export async function fetchKomisjonData(csvUrl) {
+  try {
+    const res = await fetch(csvUrl);
+    const text = await res.text();
+
+    const [headerLine, ...lines] = text.trim().split("\n");
+
+    // Grupeerime komisjonid liikme ID järgi
+    const komisjonMap = new Map();
+
+    lines.forEach((line) => {
+      const values = line.split(",").map((v) => v.trim());
+      const liigeId = values[0]; // Esimene veerg on "liige" (ID)
+      const komisjon = values[1]; // Teine veerg on "komisjon"
+
+      if (liigeId && komisjon) {
+        if (!komisjonMap.has(liigeId)) {
+          komisjonMap.set(liigeId, []);
+        }
+        komisjonMap.get(liigeId).push(komisjon);
+      }
+    });
+
+    return komisjonMap;
+  } catch (error) {
+    console.error("Viga komisjoni andmete laadimisel:", error);
+    return new Map();
+  }
+}

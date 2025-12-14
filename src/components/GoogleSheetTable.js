@@ -13,14 +13,20 @@ import {
   Center,
   Text,
   Button,
+  Tooltip,
+  Badge,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { DatePickerInput } from "@mantine/dates";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
-import { fetchGoogleSheetCsv } from "../lib/fetchGoogleSheet";
+import {
+  fetchGoogleSheetCsv,
+  fetchKomisjonData,
+} from "../lib/fetchGoogleSheet";
 import {
   GOOGLE_SHEET_CSV_URL,
+  KOMISJON_CSV_URL,
   TABLE_TITLE,
   DISPLAY_COLUMNS,
   COLUMN_LABELS,
@@ -35,13 +41,30 @@ export default function GoogleSheetTable() {
   const [sortAsc, setSortAsc] = useState(true);
   const [sortColumn, setSortColumn] = useState("päevi_ametis");
   const [options, setOptions] = useState([]);
+  const [komisjonMap, setKomisjonMap] = useState(new Map());
 
   useEffect(() => {
-    fetchGoogleSheetCsv(GOOGLE_SHEET_CSV_URL).then(({ rows }) => {
-      setData(rows);
-      setFiltered(rows);
+    // Laeme mõlemad andmekogud paralleelselt
+    Promise.all([
+      fetchGoogleSheetCsv(GOOGLE_SHEET_CSV_URL),
+      fetchKomisjonData(KOMISJON_CSV_URL),
+    ]).then(([{ rows }, komisjonData]) => {
+      // Lisame igale reale komisjonide info
+      const rowsWithKomisjon = rows.map((row) => {
+        const komisjonid = komisjonData.get(row.ID) || [];
+        return {
+          ...row,
+          komisjonid: komisjonid,
+          komisjonide_arv: komisjonid.length,
+        };
+      });
+
+      setData(rowsWithKomisjon);
+      setFiltered(rowsWithKomisjon);
+      setKomisjonMap(komisjonData);
+
       const uniquePol = Array.from(
-        new Set(rows.map((r) => r.pol_rühm).filter(Boolean))
+        new Set(rowsWithKomisjon.map((r) => r.pol_rühm).filter(Boolean))
       );
       setOptions(uniquePol.map((val) => ({ value: val, label: val })));
     });
@@ -238,9 +261,47 @@ export default function GoogleSheetTable() {
                 <Table.Tr key={i}>
                   {DISPLAY_COLUMNS.map((col) => (
                     <Table.Td key={col}>
-                      {["AKL_algus", "AKL_lõpp", "päevi_ametis"].includes(
-                        col
-                      ) ? (
+                      {col === "komisjonide_arv" ? (
+                        <Center>
+                          {row.komisjonid && row.komisjonid.length > 0 ? (
+                            <Tooltip
+                              label={
+                                <div style={{ maxWidth: 300 }}>
+                                  <Text size="sm" fw={500} mb={4}>
+                                    Komisjonid:
+                                  </Text>
+                                  {row.komisjonid.map((k, idx) => (
+                                    <Text key={idx} size="xs">
+                                      • {k}
+                                    </Text>
+                                  ))}
+                                </div>
+                              }
+                              multiline
+                              withArrow
+                              position="top"
+                              transitionProps={{
+                                transition: "fade",
+                                duration: 200,
+                              }}
+                            >
+                              <Badge
+                                variant="light"
+                                color="blue"
+                                style={{ cursor: "help" }}
+                              >
+                                {row.komisjonide_arv}
+                              </Badge>
+                            </Tooltip>
+                          ) : (
+                            <Text size="sm" c="dimmed">
+                              0
+                            </Text>
+                          )}
+                        </Center>
+                      ) : ["AKL_algus", "AKL_lõpp", "päevi_ametis"].includes(
+                          col
+                        ) ? (
                         <Center>{row[col]}</Center>
                       ) : (
                         row[col]
