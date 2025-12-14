@@ -23,14 +23,18 @@ import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import {
   fetchGoogleSheetCsv,
   fetchKomisjonData,
+  fetchKomisjonidMetadata,
 } from "../lib/fetchGoogleSheet";
 import {
   GOOGLE_SHEET_CSV_URL,
   KOMISJON_CSV_URL,
+  KOMISJONID_METADATA_CSV_URL,
   TABLE_TITLE,
   DISPLAY_COLUMNS,
   COLUMN_LABELS,
+  AK_LOPP,
 } from "../constants";
+import KomisjonModal from "./Komisjonmodal";
 
 export default function GoogleSheetTable() {
   const router = useRouter();
@@ -42,31 +46,38 @@ export default function GoogleSheetTable() {
   const [sortColumn, setSortColumn] = useState("päevi_ametis");
   const [options, setOptions] = useState([]);
   const [komisjonMap, setKomisjonMap] = useState(new Map());
+  const [modalOpened, setModalOpened] = useState(false);
+  const [selectedLiige, setSelectedLiige] = useState(null);
 
   useEffect(() => {
-    // Laeme mõlemad andmekogud paralleelselt
+    // Laeme kõik kolm andmekogumit paralleelselt
     Promise.all([
       fetchGoogleSheetCsv(GOOGLE_SHEET_CSV_URL),
-      fetchKomisjonData(KOMISJON_CSV_URL),
-    ]).then(([{ rows }, komisjonData]) => {
-      // Lisame igale reale komisjonide info
-      const rowsWithKomisjon = rows.map((row) => {
-        const komisjonid = komisjonData.get(row.ID) || [];
-        return {
-          ...row,
-          komisjonid: komisjonid,
-          komisjonide_arv: komisjonid.length,
-        };
-      });
+      fetchKomisjonidMetadata(KOMISJONID_METADATA_CSV_URL),
+    ]).then(([{ rows }, defaultDates]) => {
+      // Nüüd laeme komisjoni andmed koos vaikimisi kuupäevadega
+      fetchKomisjonData(KOMISJON_CSV_URL, defaultDates, AK_LOPP).then(
+        (komisjonData) => {
+          // Lisame igale reale komisjonide info
+          const rowsWithKomisjon = rows.map((row) => {
+            const komisjonid = komisjonData.get(row.ID) || [];
+            return {
+              ...row,
+              komisjonid: komisjonid,
+              komisjonide_arv: komisjonid.length,
+            };
+          });
 
-      setData(rowsWithKomisjon);
-      setFiltered(rowsWithKomisjon);
-      setKomisjonMap(komisjonData);
+          setData(rowsWithKomisjon);
+          setFiltered(rowsWithKomisjon);
+          setKomisjonMap(komisjonData);
 
-      const uniquePol = Array.from(
-        new Set(rowsWithKomisjon.map((r) => r.pol_rühm).filter(Boolean))
+          const uniquePol = Array.from(
+            new Set(rowsWithKomisjon.map((r) => r.pol_rühm).filter(Boolean))
+          );
+          setOptions(uniquePol.map((val) => ({ value: val, label: val })));
+        }
       );
-      setOptions(uniquePol.map((val) => ({ value: val, label: val })));
     });
   }, []);
 
@@ -156,6 +167,11 @@ export default function GoogleSheetTable() {
       setSortColumn(col);
       setSortAsc(true);
     }
+  };
+
+  const handleKomisjonClick = (row) => {
+    setSelectedLiige(row);
+    setModalOpened(true);
   };
 
   if (data.length === 0) {
@@ -268,16 +284,13 @@ export default function GoogleSheetTable() {
                               label={
                                 <div style={{ maxWidth: 300 }}>
                                   <Text size="sm" fw={500} mb={4}>
-                                    Komisjonid:
+                                    Klõpsa detailide vaatamiseks
                                   </Text>
-                                  {row.komisjonid.map((k, idx) => (
-                                    <Text key={idx} size="xs">
-                                      • {k}
-                                    </Text>
-                                  ))}
+                                  <Text size="xs" c="dimmed">
+                                    {row.komisjonid.length} komisjoni
+                                  </Text>
                                 </div>
                               }
-                              multiline
                               withArrow
                               position="top"
                               transitionProps={{
@@ -288,9 +301,10 @@ export default function GoogleSheetTable() {
                               <Badge
                                 variant="light"
                                 color="blue"
-                                style={{ cursor: "help" }}
+                                style={{ cursor: "pointer" }}
+                                onClick={() => handleKomisjonClick(row)}
                               >
-                                {row.komisjonide_arv}
+                                {row.komisjonide_arv} 🔍
                               </Badge>
                             </Tooltip>
                           ) : (
@@ -314,6 +328,14 @@ export default function GoogleSheetTable() {
           </Table>
         </ScrollArea>
       </Paper>
+
+      {/* Komisjoni Modal */}
+      <KomisjonModal
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+        liige={selectedLiige}
+        komisjonid={selectedLiige?.komisjonid || []}
+      />
     </Container>
   );
 }

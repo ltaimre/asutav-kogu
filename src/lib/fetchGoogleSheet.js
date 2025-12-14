@@ -63,11 +63,45 @@ export async function fetchGoogleSheetCsv(csvUrl) {
 }
 
 /**
- * Laeb komisjoni kuulumise andmed CSV-st
- * @param {string} csvUrl - Komisjoni kuulumise CSV URL
- * @returns {Promise<Map<string, string[]>>} - Map kus võti on liikme ID ja väärtus on komisjonide nimekiri
+ * Laeb komisjonide vaikimisi alguskuupäevad CSV-st
+ * @param {string} csvUrl - Komisjonide sheet CSV URL
+ * @returns {Promise<Map<string, string>>} - Map kus võti on komisjoni nimi ja väärtus on vaikimisi alguskuupäev
  */
-export async function fetchKomisjonData(csvUrl) {
+export async function fetchKomisjonidMetadata(csvUrl) {
+  try {
+    const res = await fetch(csvUrl);
+    const text = await res.text();
+
+    const [headerLine, ...lines] = text.trim().split("\n");
+
+    // Loome Map komisjoni nimega kui võti ja Valimised kuupäevaga kui väärtus
+    const komisjonDefaultDates = new Map();
+
+    lines.forEach((line) => {
+      const values = line.split(",").map((v) => v.trim());
+      const komisjonNimi = values[0]; // Esimene veerg on "Komisjon"
+      const valimisedKuupaev = values[1]; // Teine veerg on "Valimised"
+
+      if (komisjonNimi && valimisedKuupaev) {
+        komisjonDefaultDates.set(komisjonNimi, valimisedKuupaev);
+      }
+    });
+
+    return komisjonDefaultDates;
+  } catch (error) {
+    console.error("Viga komisjonide metadata laadimisel:", error);
+    return new Map();
+  }
+}
+
+/**
+ * Laeb komisjoni kuulumise andmed CSV-st koos kuupäevadega
+ * @param {string} csvUrl - Komisjoni kuulumise CSV URL
+ * @param {Map<string, string>} defaultDates - Komisjonide vaikimisi alguskuupäevad
+ * @param {string} akLopp - Asutava Kogu lõpp kuupäev (vaikimisi lõpp)
+ * @returns {Promise<Map<string, Array>>} - Map kus võti on liikme ID ja väärtus on komisjonide massiiv objektidega
+ */
+export async function fetchKomisjonData(csvUrl, defaultDates, akLopp) {
   try {
     const res = await fetch(csvUrl);
     const text = await res.text();
@@ -79,14 +113,33 @@ export async function fetchKomisjonData(csvUrl) {
 
     lines.forEach((line) => {
       const values = line.split(",").map((v) => v.trim());
-      const liigeId = values[0]; // Esimene veerg on "liige" (ID)
-      const komisjon = values[1]; // Teine veerg on "komisjon"
+      const liigeId = values[0]; // "liige" (ID)
+      const komisjon = values[1]; // "komisjon"
+      const kuulumineAlgus = values[2]; // "kuulumine_algus"
+      const kuulumineLopp = values[3]; // "kuulumine_lopp"
 
       if (liigeId && komisjon) {
         if (!komisjonMap.has(liigeId)) {
           komisjonMap.set(liigeId, []);
         }
-        komisjonMap.get(liigeId).push(komisjon);
+
+        // Määrame alguskuupäeva: kas antud kuupäev või vaikimisi komisjoni valimiste kuupäev
+        let algus = kuulumineAlgus;
+        if (!algus || algus === "") {
+          algus = defaultDates.get(komisjon) || "";
+        }
+
+        // Määrame lõpukuupäeva: kas antud kuupäev või AK_LOPP
+        let lopp = kuulumineLopp;
+        if (!lopp || lopp === "") {
+          lopp = akLopp;
+        }
+
+        komisjonMap.get(liigeId).push({
+          nimi: komisjon,
+          algus: algus,
+          lopp: lopp,
+        });
       }
     });
 

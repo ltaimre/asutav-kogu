@@ -8,6 +8,10 @@ export const GOOGLE_SHEET_CSV_URL =
 export const KOMISJON_CSV_URL =
   "https://docs.google.com/spreadsheets/d/1A8rcM-TrdTEAFRH6fP4TfwnFCvqpZnrTpRGCsatSyvo/export?format=csv&gid=565553555";
 
+// Komisjonide metadata (vaikimisi alguskuupäevad) - pead asendama KOMISJONID_GID õige gid numbriga
+export const KOMISJONID_METADATA_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/1A8rcM-TrdTEAFRH6fP4TfwnFCvqpZnrTpRGCsatSyvo/export?format=csv&gid=1024923097";
+
 export const TABLE_TITLE = "Asutava Kogu liikmed";
 
 export const AK_ALGUS = "23.04.1919";
